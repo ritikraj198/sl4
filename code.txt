@@ -1,0 +1,213 @@
+#include<stdio.h>
+#include<stdlib.h>
+#define MAX_ARRSIZE 4
+#define MAX_NODES 4
+
+
+typedef struct SizeArr_tag
+{
+    //a size variable that will store the maximum size of the data that particular linklists will store
+    int size;
+    //a pointer variable that will be pointing to the start of the link list of that particular size
+    void *llptr;
+}SA;
+
+typedef struct linkNode_tag
+{
+    int status_code;
+    struct linkNode_tag *next;
+    void *dptr;
+}LN;
+
+void heap_creation(SA *arr_ptr);
+void* allocation(int req_size,SA *arr_ptr);
+void traverse(SA*);
+void deallocation(void*,SA*);
+
+int main()
+{
+    //we are declaring an array that will point to the different sizes of the link lists
+    SA arr[4];
+    int curr_size=2;
+    int i,j;
+    
+    for(i=0;i<MAX_ARRSIZE;i++)
+    {
+        arr[i].size=curr_size;
+        arr[i].llptr=NULL;
+        curr_size=curr_size*2;
+    }
+    
+    heap_creation(arr);
+    //traverse(&arr[0]);
+    int *a;
+    int *b;
+    //int *c;
+    
+    a=(int*)allocation(16,arr);
+    b=(int*)allocation(8,arr);
+    //c=(int*)allocation(17,arr);
+    
+    traverse(&arr[0]);
+    deallocation(a,arr);
+    traverse(&arr[0]);
+}
+
+/*this function will traverse through all the indexes of the array and show what sizes of data 
+can they hold in the link list that they will be pointing to by their llptr pointer and it will also 
+travese through all the nodes of the link list of the each index of the array and represnt their meta 
+data as well(to showcase whether the particular node is available for allocation or not by their status 
+code)*/
+void traverse(SA* arr)
+{
+    int i;
+    printf("\nThe updated heap is---");
+    for(i=0;i<MAX_ARRSIZE;i++)
+    {
+
+        printf("\nthe size field of arr[%d] is %d ",i,arr[i].size);
+        printf("\nthe link list pointer is is%p ",arr[i].llptr);
+        LN *nptr=arr[i].llptr;
+        while (nptr!=NULL)
+        {
+            printf("\n");
+            printf("status code=%d ",nptr->status_code);
+            printf("%p ",nptr);
+            //printf("%p ",nptr->dptr);
+            nptr=nptr->next;
+            
+        }
+    }
+}
+
+/*when we have created the array in which we have predecided the sizes now will we create link list
+which are capable of holding of different sizes of the data that we will use later in heap management
+for allocation and deallocation*/
+void heap_creation(SA *arr_ptr)
+{
+    int curr_size=2,j,i;
+    
+    for(j=0;j<MAX_ARRSIZE;j++)
+    {
+        LN *lptr=NULL;
+        LN *nptr;
+        
+        for(i=1;i<=MAX_NODES;i++)
+        {
+            
+            nptr=(LN*)malloc(sizeof(LN));
+            nptr->status_code=0;
+            nptr->next=lptr;
+            lptr=nptr;
+            nptr->dptr=(void*)malloc(curr_size);
+            
+        }
+        
+        
+        arr_ptr[j].llptr=lptr;
+        
+        curr_size=curr_size*2;
+    }
+}
+
+/*a function that will be used for allocating memory in the heap when asked from the main function
+and will accordingly update the meta data under the heap management scheme*/
+void* allocation(int req_size,SA *arr_ptr)
+{
+    int j=0,flag=0;
+    void* rptr=NULL;
+    //checking whether the required size does not exceed the biggest biggest predetermined sizes
+    if (req_size>arr_ptr[MAX_ARRSIZE-1].size)
+    {
+        printf("\nthe required size required for allocation exceeds the max size avalaibe in the heap");
+        return(rptr);
+    }
+    
+    else
+    {
+        /*finding in the array index whose pointer will point to the link list,of the smallest size in
+        which the data could be stored as we do in the (best fit policy)*/
+        while((arr_ptr[j].size<req_size)&&(j<MAX_ARRSIZE))
+        {
+            j++;
+        }
+    
+        
+        while((j<MAX_ARRSIZE)&&(flag==0))
+        {
+            LN *nptr=arr_ptr[j].llptr;
+            
+            while((nptr!=NULL)&&(flag==0))
+            {
+                if (nptr->status_code==0)
+                {
+                    nptr->status_code=1;
+                    flag=1;
+                    
+                }
+                else
+                {
+                    nptr=nptr->next;  
+                
+                }
+            }
+            
+            if(flag==0)
+            {
+                j++;
+            }
+            else if(flag==1)
+            {
+                printf("\nMemory allocated succesfully");
+                return(nptr->dptr);
+            }
+        }
+        if(flag==0)
+        {
+            printf("\nsorry no appropiate space available");
+            return(rptr);
+        }
+        
+    }
+}
+
+/*a function that will be used for freeing the memory of heap(and itwill accordingly update the meta data)
+under the heap managemnt scheme*/
+void deallocation(void* fptr,SA* arr_ptr)
+{
+    int j=0,flag=0;
+    /*we will travese through all the nodes of all sizes until we to get a valid node
+    nedded to be freed */
+    while((j<MAX_ARRSIZE)&&(flag==0))
+    {
+        LN* nptr=arr_ptr[j].llptr;
+        
+        while((nptr!=NULL)&&(flag==0))
+        {
+            if(nptr->dptr==fptr)
+            {
+                nptr->status_code=0;
+                flag=1;
+            }
+            else
+            {
+                nptr=nptr->next;
+            }
+        }
+        
+        if(flag==0)
+        {
+            j++;
+        }
+        
+    }
+    if(flag==0)
+    {
+        printf("\nthe memory asked for deletion isn't available");
+    }
+    else if(flag==1)
+    {
+        printf("\nthe asked heap memory is freed and will be available for another use");
+    }
+    
+}
